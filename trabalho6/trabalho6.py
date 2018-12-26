@@ -8,11 +8,14 @@ from operator import attrgetter
 from math import acos
 import sys
 
-#Third home work from Graphics Computer at UFRJ by Lyang Higa Cano
+from Delaunay import Delaunay
+
+#6th home work from Graphics Computer at UFRJ by Lyang Higa Cano
 
 '''Instruction
     Just click to collect points
-    press b to bild the convex hull
+    press b to bild the triangulation
+    press s to smooth the triangulation
     press c to start again
 '''
 
@@ -22,11 +25,13 @@ import sys
 DIMX = 640 
 DIMY = 480 
 INF = 999999
+LAMBDA = 0.3
 
 #stop collecting points
 stop = False
 points = [] 
 ch_points = []
+triangles = []
 
 
 class Point:
@@ -130,6 +135,14 @@ def displayFun():
         glVertex2f(p.x,p.y)
     glEnd()
 
+    #Draw the triangles
+    glBegin(GL_LINE_STRIP)
+    for t in triangles:
+        glVertex2f(points[t[0]].x, points[t[0]].y)
+        glVertex2f(points[t[1]].x, points[t[1]].y)
+        glVertex2f(points[t[2]].x, points[t[2]].y)    
+    glEnd()
+
 
     glFlush()
 
@@ -145,7 +158,7 @@ def mouse(button, state, x, y):
 
 
 def keyboard(key, x, y):
-    global points,ch_points, stop
+    global points,ch_points, stop, triangles
 
     key = key.decode("utf-8")
     
@@ -155,10 +168,24 @@ def keyboard(key, x, y):
         ch_points = []
         stop =False
 
-    #build the convex hull
+    #build the triangulation
     if str(key) == 'b':
         stop = True
         convex_hull_bilder()
+        #triangulation
+        tri = Delaunay()
+        for ponto in points:
+            tri.addPoint(ponto)
+
+        triangles = tri.tri()
+
+    if str(key) == 's':
+        smooth()
+        tri = Delaunay()
+        for ponto in points:
+            tri.addPoint(ponto)
+
+        triangles = tri.tri()
 
     glutPostRedisplay()
 
@@ -169,11 +196,26 @@ def convex_hull_bilder():
     ch.jarvis()
     ch_points = ch.pl
 
+def smooth():
+    global points, triangles
+    v_old = points[-1]
+    x=0
+    y=0
+    for i in range(len(points)):
+        x+= points[i].x - v_old.x
+        y+= points[i].y - v_old.y
+    x /= len(points)
+    y /= len(points)
+    x = v_old.x + (LAMBDA * x)
+    y = v_old.y + (LAMBDA * y)
+    v_new = Point(x,y)
+    points[-1] = v_new
+ 
     
 if __name__ == '__main__':
     glutInit()
     glutInitWindowSize(DIMX,DIMY)
-    glutCreateWindow("Convex Hull - Jarvis")
+    glutCreateWindow("Triangulation - Smoothing")
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA)  
     glutMouseFunc(mouse)
     glutKeyboardFunc(keyboard)

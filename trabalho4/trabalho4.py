@@ -8,11 +8,13 @@ from operator import attrgetter
 from math import acos
 import sys
 
-#Third home work from Graphics Computer at UFRJ by Lyang Higa Cano
+from Delaunay import Delaunay
+
+#4th home work from Graphics Computer at UFRJ by Lyang Higa Cano
 
 '''Instruction
     Just click to collect points
-    press b to bild the convex hull
+    press b to bild the triangulation
     press c to start again
 '''
 
@@ -27,6 +29,7 @@ INF = 999999
 stop = False
 points = [] 
 ch_points = []
+triangles = []
 
 
 class Point:
@@ -130,6 +133,14 @@ def displayFun():
         glVertex2f(p.x,p.y)
     glEnd()
 
+    #Draw the triangles
+    glBegin(GL_LINE_STRIP)
+    for t in triangles:
+        glVertex2f(points[t[0]].x, points[t[0]].y)
+        glVertex2f(points[t[1]].x, points[t[1]].y)
+        glVertex2f(points[t[2]].x, points[t[2]].y)    
+    glEnd()
+
 
     glFlush()
 
@@ -145,7 +156,7 @@ def mouse(button, state, x, y):
 
 
 def keyboard(key, x, y):
-    global points,ch_points, stop
+    global points,ch_points, stop, triangles
 
     key = key.decode("utf-8")
     
@@ -159,6 +170,12 @@ def keyboard(key, x, y):
     if str(key) == 'b':
         stop = True
         convex_hull_bilder()
+        #triangulation
+        tri = Delaunay()
+        for ponto in points:
+            tri.addPoint(ponto)
+
+        triangles = tri.tri()
 
     glutPostRedisplay()
 
@@ -173,7 +190,7 @@ def convex_hull_bilder():
 if __name__ == '__main__':
     glutInit()
     glutInitWindowSize(DIMX,DIMY)
-    glutCreateWindow("Convex Hull - Jarvis")
+    glutCreateWindow("Triangulation - Delanay")
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA)  
     glutMouseFunc(mouse)
     glutKeyboardFunc(keyboard)
